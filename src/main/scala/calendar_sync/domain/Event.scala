@@ -1,14 +1,14 @@
 package calendar_sync.domain
 
-import java.time.{LocalDate, LocalDateTime}
+case class Event(value: com.google.api.services.calendar.model.Event) {
 
-abstract class Event (val calendarId: String, val eventId: Option[String], var title: String) {
-  def mask(newTitle: String): Event
-}
+  def id = value.getId
+  def mask(dummyText: String) = Event(
+    new com.google.api.services.calendar.model.Event()
+      .setStatus(dummyText)
+      .setStart(value.getStart)
+      .setEnd(value.getEnd)
+  )
 
-object Event {
-  def apply (calendarId: String, eventId: Option[String], title: String, startDateTime: LocalDateTime, endDateTime: LocalDateTime): NormalEvent
-    = NormalEvent(calendarId, eventId, title, startDateTime, endDateTime)
-  def apply(calendarId: String, eventId: Option[String], title: String, startDate: LocalDate, endDate: LocalDate)
-    = AllDayEvent(calendarId, eventId, title, startDate, endDate)
+  def masked(dummyText: String) = value.getStatus == dummyText
 }

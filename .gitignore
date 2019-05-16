@@ -17,3 +17,7 @@ project/plugins/project/
 
 # GoogleApps
 credentials.json
+
+src/main/resources/*.conf
+!src/main/resources/*-sample.conf
+src/main/resources/token

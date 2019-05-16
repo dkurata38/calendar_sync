@@ -1,101 +1,124 @@
 package calendar_sync.infrastracture
 
-import java.time._
-import java.util.Date
+import java.time.ZoneId
+import java.util.Collections
 
-import calendar_sync.domain.{AllDayEvent, Event, IGoogleCalendarClient, NormalEvent}
+import calendar_sync.domain.{Date, Duration, Event}
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.DateTime
-import com.google.api.services.calendar.model.EventDateTime
-import com.google.api.services.calendar.{Calendar, model}
+import com.google.api.services.calendar.model.Events
+import com.google.api.services.calendar.{Calendar, CalendarScopes}
+import com.typesafe.config.ConfigFactory
 
 import scala.collection.JavaConverters._
+import scala.util.{Failure, Success, Try}
+import pureconfig.generic.auto._
 
-class GoogleCalendarClient extends IGoogleCalendarClient{
+class GoogleCalendarClient {
+  private val jsonFactory = JacksonFactory.getDefaultInstance
+  private val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
+  private val scopes = Collections.singletonList(CalendarScopes.CALENDAR_EVENTS)
+  private val applicationName = ""
   /**
     * https://developers.google.com/calendar/v3/reference/events/list
-    * @param calendarId
-    * @param startDateTime
-    * @param endDateTime
+    * calendarIdで指定されたCalendarについて, startDateで指定した日付からendDateで指定した日付までの予定を取得する.
+    * @param calendarId 予定を取得するCalendarのID
+    * @param duration 取得する予定の範囲
     * @return
     */
-  override def getEventsByCalendarId(calendarId: String, startDateTime: LocalDate, endDateTime: LocalDate): Seq[Event] = {
-    val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
-    val jsonFactory = JacksonFactory.getDefaultInstance
-    val service = new Calendar.Builder(httpTransport, jsonFactory, null).setApplicationName("").build()
+  def getEventsByCalendarId(calendarId: String, duration: Duration): Try[Seq[Event]] = {
+    val credential = GoogleCredential
+      .fromStream(this.getClass.getResourceAsStream("/token/source-owner.json"))
+      .createScoped(scopes)
+    pureconfig.loadConfig[GoogleApiConfig](ConfigFactory.load().getConfig("api.from"))
+      .map(Success(_))
+      .left.map(failures => Failure(new RuntimeException(failures.toList.mkString("¥¥n"))))
+      .merge
+      .flatMap{config =>
+        val service = new Calendar.Builder(httpTransport, jsonFactory, credential)
+          .setApplicationName(config.applicationName)
+          .build()
 
-    val timeMin = new DateTime(Date.from(startDateTime.atStartOfDay(ZoneId.systemDefault()).toInstant))
-    val timeMax = new DateTime(Date.from(endDateTime.atStartOfDay(ZoneId.systemDefault()).toInstant))
+        @scala.annotation.tailrec
+        def extractEventsRecursive(accum: Seq[Event] = Nil, calendarId: String, service: Calendar,
+                                   timeMin: DateTime, timeMax: DateTime, maybePageToken: Option[String] = None): Try[Seq[Event]] = {
 
-    def getEvents(pageToken: String): Seq[Event] = {
-      @scala.annotation.tailrec
-      def recursive(pageToken: String, aevents: Seq[Event]): Seq[Event] = {
-        val response = service.events().list("").setPageToken(pageToken).setTimeMin(timeMin).setTimeMax(timeMax).execute()
-        val events = response.getItems.asScala.map{i =>
-          if (i.getStart.getDate == null) {
-            NormalEvent(calendarId, Some(i.getId), i.getStatus,
-              LocalDateTime.ofInstant(Instant.ofEpochMilli(i.getStart.getDateTime.getValue), ZoneId.of("GMT")),
-              LocalDateTime.ofInstant(Instant.ofEpochMilli(i.getEnd.getDateTime.getValue), ZoneId.of("GMT")))
-          } else {
-            AllDayEvent(calendarId, Some(i.getId), i.getStatus,
-              LocalDateTime.ofInstant(Instant.ofEpochMilli(i.getStart.getDate.getValue), ZoneId.of("GMT")).toLocalDate,
-              LocalDateTime.ofInstant(Instant.ofEpochMilli(i.getEnd.getDate.getValue), ZoneId.of("GMT")).toLocalDate)
+          val maybeResponse = Try(service.events()
+            .list(calendarId)
+            .setTimeMin(timeMin)
+            .setTimeMax(timeMax)
+            .setPageToken(maybePageToken.orNull)
+            .execute())
+
+          maybeResponse match {
+            case Success(response) if response.getNextPageToken == null => Success(accum ++ response.getItems.asScala.map(Event))
+            case Success(response) if response.getNextPageToken != null =>
+              extractEventsRecursive(accum ++ response.getItems.asScala.map(Event), calendarId, service, timeMin, timeMax, Option(response.getNextPageToken))
+            case Failure(exception) => Failure(exception)
           }
         }
-        if (pageToken == null) return aevents ++: events
-        else recursive(response.getNextPageToken, aevents ++: events)
+        extractEventsRecursive(calendarId = calendarId, service = service,
+          timeMin = duration.start.toGoogleDateTime, timeMax = duration.end.toGoogleDateTime)
       }
-
-      recursive(null, Seq.empty)
-    }
-
-    getEvents(null)
   }
+
+  implicit class GoogleDateTime(date: Date) {
+    def toGoogleDateTime = new DateTime(date.value.atStartOfDay(ZoneId.systemDefault()).toInstant.toEpochMilli)
+  }
+
+  @scala.annotation.tailrec
+  final def getEventsRecursive(calendarId: String, service: Calendar,timeMin: DateTime, timeMax: DateTime, pageToken: Option[String] = None, events: Seq[Event] = Seq.empty): Seq[calendar_sync.domain.Event] = {
+    val response = service.events()
+      .list(calendarId)
+      .setPageToken(pageToken.orNull).setTimeMin(timeMin).setTimeMax(timeMax)
+      .execute()
+
+    val queriedEvents = response.getItems.asScala.map(event => Event(event))
+    if (pageToken == null) events ++ queriedEvents
+    else getEventsRecursive(calendarId, service, timeMin, timeMax, Option(response.getNextPageToken), events ++ queriedEvents)
+  }
+
 
   /**
     * https://developers.google.com/calendar/v3/reference/events/insert
-    * @param event
+    * @param calendarId 予定を追加する対象のカレンダーID
+    * @param event 追加する予定
     */
-  override def create(event: Event): Unit = {
-    val newEvent = event match {
-      case NormalEvent(_, _, title, start, end) => {
-        val startDateTime = new DateTime(Date.from(start.atZone(ZoneId.systemDefault()).toInstant))
-        val endDateTime = new DateTime(Date.from(end.atZone(ZoneId.systemDefault()).toInstant))
-        new model.Event()
-          .setSummary(title)
-          .setStart(new EventDateTime()
-            .setDateTime(startDateTime)
-            .setTimeZone(ZoneId.systemDefault().toString))
-          .setEnd(new EventDateTime()
-            .setDateTime(endDateTime)
-            .setTimeZone(ZoneId.systemDefault().toString))
-      }
-      case AllDayEvent(_, _, title, start, end) => {
-        val startDateTime = new DateTime(Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant))
-        val endDateTime = new DateTime(Date.from(end.atStartOfDay(ZoneId.systemDefault()).toInstant))
-        new model.Event()
-          .setSummary(title)
-          .setStart(new EventDateTime()
-            .setDate(startDateTime)
-            .setTimeZone(ZoneId.systemDefault().toString))
-          .setEnd(new EventDateTime()
-            .setDate(endDateTime)
-            .setTimeZone(ZoneId.systemDefault().toString))
-      }
-    }
-    val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
-    val jsonFactory = JacksonFactory.getDefaultInstance
-    val service = new Calendar.Builder(httpTransport, jsonFactory, null).setApplicationName("").build()
+  def create(calendarId: String, event: Event) = {
+    val credential =
+      GoogleCredential.fromStream(this.getClass.getResourceAsStream("/token/target-owner.json"))
+        .createScoped(scopes)
 
-    service.events().insert(event.calendarId, newEvent)
+    pureconfig.loadConfig[GoogleApiConfig](ConfigFactory.load().getConfig("api.to")).map{config =>
+      val service = new Calendar.Builder(
+        httpTransport,
+        jsonFactory,
+        credential
+      )
+        .setApplicationName(config.applicationName)
+        .build()
+
+      service.events().insert(calendarId, event.value)
+    }
   }
 
-  override def delete(calendarId: String, eventId: String): Unit = {
-    val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
-    val jsonFactory = JacksonFactory.getDefaultInstance
-    val service = new Calendar.Builder(httpTransport, jsonFactory, null).setApplicationName("").build()
+  def delete(calendarId: String, eventId: String) = {
+    val credential =
+      GoogleCredential.fromStream(this.getClass.getResourceAsStream("/token/target-owner.json"))
+        .createScoped(scopes)
 
-    service.events().delete(calendarId, eventId)
+    pureconfig.loadConfig[GoogleApiConfig](ConfigFactory.load().getConfig("api.to")).map{config =>
+      val service = new Calendar.Builder(
+        httpTransport,
+        jsonFactory,
+        credential
+      )
+      .setApplicationName(config.applicationName)
+      .build()
+
+      service.events().delete(calendarId, eventId)
+    }
   }
 }
