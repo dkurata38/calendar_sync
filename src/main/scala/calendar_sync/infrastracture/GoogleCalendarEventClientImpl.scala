@@ -16,11 +16,10 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 import pureconfig.generic.auto._
 
-class GoogleCalendarClient {
+class GoogleCalendarEventClientImpl {
   private val jsonFactory = JacksonFactory.getDefaultInstance
   private val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
   private val scopes = Collections.singletonList(CalendarScopes.CALENDAR_EVENTS)
-  private val applicationName = ""
   /**
     * https://developers.google.com/calendar/v3/reference/events/list
     * calendarIdで指定されたCalendarについて, startDateで指定した日付からendDateで指定した日付までの予定を取得する.

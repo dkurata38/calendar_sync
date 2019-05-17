@@ -2,11 +2,11 @@ package calendar_sync.application.service
 
 
 import calendar_sync.domain.{Duration, Event}
-import calendar_sync.infrastracture.GoogleCalendarClient
+import calendar_sync.infrastracture.GoogleCalendarEventClientImpl
 
 class EventsQueryService {
   def query(calendarId: String, duration: Duration): Either[Throwable, Seq[Event]]
-    = new GoogleCalendarClient().getEventsByCalendarId(calendarId, duration).toEither
+    = new GoogleCalendarEventClientImpl().getEventsByCalendarId(calendarId, duration).toEither
 
   def query(calendarIds: Seq[String], duration: Duration): Either[Throwable, Seq[Event]] = calendarIds
     .map(calendarId =>
