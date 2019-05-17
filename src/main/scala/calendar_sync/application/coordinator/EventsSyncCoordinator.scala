@@ -9,16 +9,15 @@ class EventsSyncCoordinator {
     val commandService = new EventsCommandService
 
     queryService.query(targetCalendarId, duration).map(events =>
-      events.filter(event => event.masked(dummyText)).map(event => commandService.delete(targetCalendarId, event.id))
+      events.filter(event => event.masked(dummyText))
+        .map(event => commandService.delete(targetCalendarId, event.id))
+        .foreach{case Left(value) => value.printStackTrace()}
     )
-    .map(_ =>
-      queryService.query(sourceCalendarIds, duration).map(events =>
-        events
-          .map(event => event.mask(dummyText))
-          .map(event =>
-            commandService.create(targetCalendarId, event)
-          )
-      )
-    )
+    queryService.query(sourceCalendarIds, duration).map(events =>
+      events
+        .map(event => event.mask(dummyText))
+        .map(event => commandService.create(targetCalendarId, event))
+        .foreach{case Left(value) => value.printStackTrace()})
+      .left.foreach(exception => exception.printStackTrace())
   }
 }
