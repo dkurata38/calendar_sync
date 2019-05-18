@@ -74,7 +74,7 @@ class GoogleCalendarEventClientImpl extends GoogleCalendarEventClient{
       .map(clientSecret =>
         new GoogleAuthorizationCodeFlow.Builder(httpTransport, jsonFactory, clientSecret, scopes)
           .setAccessType("offline")
-          .setDataStoreFactory(new FileDataStoreFactory(new File(getClass.getResource("/token/").toURI)))
+          .setDataStoreFactory(new FileDataStoreFactory(new File(getClass.getClassLoader.getResource("token").toURI)))
           .build())
       .map(authFlow => new AuthorizationCodeInstalledApp(authFlow, new LocalServerReceiver()).authorize("user"))
   }
