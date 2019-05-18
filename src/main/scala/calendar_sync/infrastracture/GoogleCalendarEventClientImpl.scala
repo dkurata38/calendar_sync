@@ -52,7 +52,6 @@ class GoogleCalendarEventClientImpl extends GoogleCalendarEventClient{
 
       @scala.annotation.tailrec
       def extractEventsRecursive(accum: Seq[Event] = Nil, maybePageToken: Option[String] = None): Try[Seq[Event]] = {
-
         val maybeResponse = Try(service.events()
           .list(calendarId)
           .setTimeMin(duration.start.toGoogleDateTime)
@@ -61,10 +60,8 @@ class GoogleCalendarEventClientImpl extends GoogleCalendarEventClient{
           .execute())
 
         maybeResponse match {
-          case Success(response) => response match {
-            case GoogleEventResponse(events, None) => Success(accum ++ events.map(Event))
-            case GoogleEventResponse(events, nextPageToken) => extractEventsRecursive(accum ++ events.map(Event), nextPageToken)
-          }
+          case Success(GoogleEventResponse(events, None)) => Success(accum ++ events.map(Event))
+          case Success(GoogleEventResponse(events, nextPageToken)) => extractEventsRecursive(accum ++ events.map(Event), nextPageToken)
           case Failure(exception) => Failure(exception)
         }
       }
