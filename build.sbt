@@ -23,6 +23,8 @@ libraryDependencies ++= Seq(
   "com.google.apis" % "google-api-services-calendar" % "v3-rev305-1.23.0"
 )
 
+libraryDependencies += "com.google.inject" % "guice" % "4.0"
+
 scalacOptions ++= Seq(
   "-unchecked",
   "-deprecation",

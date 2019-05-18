@@ -11,15 +11,17 @@ import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.model.Events
 import com.google.api.services.calendar.{Calendar, CalendarScopes, model}
 import com.typesafe.config.ConfigFactory
+import javax.inject.Singleton
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 import pureconfig.generic.auto._
 
+@Singleton
 class GoogleCalendarEventClientImpl extends GoogleCalendarEventClient{
   private val jsonFactory = JacksonFactory.getDefaultInstance
   private val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
-  private val scopes = Collections.singletonList(CalendarScopes.CALENDAR_EVENTS)
+  private val scopes = Collections.singletonList(CalendarScopes.CALENDAR)
   /**
     * https://developers.google.com/calendar/v3/reference/events/list
     * calendarIdで指定されたCalendarについて, startDateで指定した日付からendDateで指定した日付までの予定を取得する.
