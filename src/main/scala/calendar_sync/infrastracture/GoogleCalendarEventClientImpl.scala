@@ -1,13 +1,18 @@
 package calendar_sync.infrastracture
 
+import java.io.{File, InputStreamReader}
 import java.time.ZoneId
 import java.util.Collections
 
 import calendar_sync.domain.{Date, Duration, Event, GoogleCalendarEventClient}
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.api.client.auth.oauth2.Credential
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
+import com.google.api.client.googleapis.auth.oauth2.{GoogleAuthorizationCodeFlow, GoogleClientSecrets, GoogleCredential}
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.DateTime
+import com.google.api.client.util.store.FileDataStoreFactory
 import com.google.api.services.calendar.model.Events
 import com.google.api.services.calendar.{Calendar, CalendarScopes, model}
 import com.typesafe.config.ConfigFactory
@@ -30,21 +35,15 @@ class GoogleCalendarEventClientImpl extends GoogleCalendarEventClient{
     * @return
     */
   def getEventsByCalendarId(calendarId: String, duration: Duration): Try[Seq[Event]] = {
-    val maybeCredential = Try(GoogleCredential
-      .fromStream(this.getClass.getResourceAsStream("/token/source-owner.json"))
-      .createScoped(scopes))
-
-    val maybeConfig = pureconfig.loadConfig[GoogleApiConfig](ConfigFactory.load().getConfig("api.from"))
-      .map(Success(_))
-      .left.map(failures => Failure(new RuntimeException(failures.toList.mkString("¥¥n"))))
-      .merge
+    val maybeCredential = getCredentials
+    val maybeApplicationName = Try(ConfigFactory.load().getString("api.application-name"))
 
     val maybeService = for {
       credential <- maybeCredential
-      config <- maybeConfig
+      applicationName <- maybeApplicationName
     } yield {
       new Calendar.Builder(httpTransport, jsonFactory, credential)
-        .setApplicationName(config.applicationName)
+        .setApplicationName(applicationName)
         .build()
     }
 
@@ -69,6 +68,17 @@ class GoogleCalendarEventClientImpl extends GoogleCalendarEventClient{
     }
   }
 
+  private def getCredentials: Try[Credential] = {
+    Try(GoogleClientSecrets.load(jsonFactory,
+      new InputStreamReader(getClass.getResourceAsStream("/token/client_secrets.json"))))
+      .map(clientSecret =>
+        new GoogleAuthorizationCodeFlow.Builder(httpTransport, jsonFactory, clientSecret, scopes)
+          .setAccessType("offline")
+          .setDataStoreFactory(new FileDataStoreFactory(new File(getClass.getResource("/token/").toURI)))
+          .build())
+      .map(authFlow => new AuthorizationCodeInstalledApp(authFlow, new LocalServerReceiver()).authorize("user"))
+  }
+
   implicit class GoogleDateTime(date: Date) {
     def toGoogleDateTime = new DateTime(date.value.atStartOfDay(ZoneId.systemDefault()).toInstant.toEpochMilli)
   }
@@ -86,45 +96,30 @@ class GoogleCalendarEventClientImpl extends GoogleCalendarEventClient{
     * @param event 追加する予定
     */
   def create(calendarId: String, event: Event) = {
-    val maybeCredential = Try(GoogleCredential
-      .fromStream(this.getClass.getResourceAsStream("/token/target-owner.json"))
-      .createScoped(scopes))
+    val maybeCredential = getCredentials
+    val maybeApplicationName = Try(ConfigFactory.load().getString("api.application-name"))
 
-
-    val maybeConfig = pureconfig.loadConfig[GoogleApiConfig](ConfigFactory.load().getConfig("api.to"))
-        .map(Success(_))
-        .left
-        .map(failures => Failure(new RuntimeException(failures.toList.mkString("¥¥n"))))
-        .merge
-
-    val maybeService = for{
+    val maybeService = for {
       credential <- maybeCredential
-      config <- maybeConfig
+      applicationName <- maybeApplicationName
     } yield {
       new Calendar.Builder(httpTransport, jsonFactory, credential)
-      .setApplicationName(config.applicationName)
-      .build()
+        .setApplicationName(applicationName)
+        .build()
     }
     maybeService.map(service => Event(service.events().insert(calendarId, event.value).execute()))
   }
 
   def delete(calendarId: String, eventId: String) = {
-    val maybeCredential = Try(GoogleCredential
-      .fromStream(this.getClass.getResourceAsStream("/token/target-owner.json"))
-      .createScoped(scopes))
-
-    val maybeConfig = pureconfig.loadConfig[GoogleApiConfig](ConfigFactory.load().getConfig("api.to"))
-        .map(Success(_))
-        .left
-        .map(failures => Failure(new RuntimeException(failures.toList.mkString("¥¥n"))))
-        .merge
+    val maybeCredential = getCredentials
+    val maybeApplicationName = Try(ConfigFactory.load().getString("api.application-name"))
 
     val maybeService = for {
       credential <- maybeCredential
-      config <- maybeConfig
+      applicationName <- maybeApplicationName
     } yield {
       new Calendar.Builder(httpTransport, jsonFactory, credential)
-        .setApplicationName(config.applicationName)
+        .setApplicationName(applicationName)
         .build()
     }
 
