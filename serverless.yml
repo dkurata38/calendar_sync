@@ -3,11 +3,12 @@ service: calendar-sync
 provider:
   name: aws
   runtime: java8
+  region: ap-northeast-1
 
 package:
   artifact: target/scala-2.12/calendar_sync.jar
 
 functions:
-  calendarSync:
+  calendar_sync:
     handler: calendar_sync.Handler
 
