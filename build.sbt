@@ -5,7 +5,7 @@ import sbtrelease.Version
 name := "calendar_sync"
 
 resolvers += Resolver.sonatypeRepo("public")
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.8"
 releaseNextVersion := { ver => Version(ver).map(_.bumpMinor.string).getOrElse("Error") }
 assemblyJarName in assembly := "calendar_sync.jar"
 
