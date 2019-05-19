@@ -20,7 +20,6 @@ import javax.inject.Singleton
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
-import pureconfig.generic.auto._
 
 @Singleton
 class GoogleCalendarEventClientImpl extends GoogleCalendarEventClient{
