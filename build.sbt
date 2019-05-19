@@ -7,6 +7,14 @@ name := "calendar_sync"
 resolvers += Resolver.sonatypeRepo("public")
 scalaVersion := "2.12.8"
 releaseNextVersion := { ver => Version(ver).map(_.bumpMinor.string).getOrElse("Error") }
+
+assemblyMergeStrategy in assembly := {
+  case PathList("com", "google", xs @ _*) => MergeStrategy.last
+  case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+  case PathList("META-INF", "mailcap.default") => MergeStrategy.discard
+  case PathList("META-INF", "mimetypes.default") => MergeStrategy.discard
+  case _  => MergeStrategy.first
+}
 assemblyJarName in assembly := "calendar_sync.jar"
 
 libraryDependencies += "com.typesafe" % "config" % "1.3.2"
