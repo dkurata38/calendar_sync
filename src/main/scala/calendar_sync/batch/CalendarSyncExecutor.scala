@@ -3,12 +3,12 @@ package calendar_sync.batch
 import calendar_sync.application.coordinator.EventsSyncCoordinator
 import calendar_sync.domain.Date
 import com.typesafe.config.ConfigFactory
-import javax.inject.Singleton
+import javax.inject.{Inject, Singleton}
 
 import scala.collection.JavaConverters.asScalaBufferConverter
 
 @Singleton
-class CalendarSyncExecutor (private val coordinator: EventsSyncCoordinator) {
+class CalendarSyncExecutor @Inject() (private val coordinator: EventsSyncCoordinator) {
   def execute = {
     val config = ConfigFactory.load()
     val sourceCalendarIds = config.getStringList("app.calendar.source").asScala
