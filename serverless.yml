@@ -10,5 +10,5 @@ package:
 
 functions:
   calendar_sync:
-    handler: calendar_sync.Handler
+    handler: calendar_sync.Handler::handleRequest
 
