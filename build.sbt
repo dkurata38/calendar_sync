@@ -1,11 +1,14 @@
 import sbt.Keys._
 import sbt._
 import sbtrelease.Version
+import StoreOauthCredential._
 
 name := "calendar_sync"
+scalaVersion := "2.12.8"
+isSnapshot := true
+
 
 resolvers += Resolver.sonatypeRepo("public")
-scalaVersion := "2.12.8"
 releaseNextVersion := { ver => Version(ver).map(_.bumpMinor.string).getOrElse("Error") }
 
 assemblyMergeStrategy in assembly := {
@@ -24,6 +27,8 @@ libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
 )
 
+libraryDependencies += "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.534"
+
 libraryDependencies ++= Seq(
   "com.google.api-client" % "google-api-client" % "1.23.0",
   "com.google.oauth-client" % "google-oauth-client-jetty" % "1.23.0",
@@ -37,3 +42,7 @@ scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
   "-Xfatal-warnings")
+
+
+clientSecretsJson := (resourceDirectory in Compile).value / "token" / "client_secrets.json"
+scopes := Seq("https://www.googleapis.com/auth/calendar")
