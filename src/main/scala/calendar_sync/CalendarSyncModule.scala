@@ -1,7 +1,8 @@
 package calendar_sync
 
 import calendar_sync.domain.{CredentialRepository, GoogleCalendarEventClient}
-import calendar_sync.infrastracture.{CredentialDynamoDBRepository, GoogleCalendarEventClientImpl}
+import calendar_sync.infrastracture.GoogleCalendarEventClientImpl
+import calendar_sync.infrastracture.credential.CredentialDynamoDBRepository
 import com.google.inject.AbstractModule
 
 class CalendarSyncModule extends AbstractModule {
