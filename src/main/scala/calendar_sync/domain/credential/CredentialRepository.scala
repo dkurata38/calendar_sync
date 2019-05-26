@@ -1,4 +1,4 @@
-package calendar_sync.domain
+package calendar_sync.domain.credential
 
 import scala.util.Try
 

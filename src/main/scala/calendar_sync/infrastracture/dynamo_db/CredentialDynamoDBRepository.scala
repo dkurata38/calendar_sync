@@ -1,6 +1,7 @@
 package calendar_sync.infrastracture.dynamo_db
 
-import calendar_sync.domain.{Credential, CredentialRepository}
+import calendar_sync.domain.CredentialRepository
+import calendar_sync.domain.credential.{Credential, CredentialRepository}
 import javax.inject.{Inject, Singleton}
 
 import scala.util.Try

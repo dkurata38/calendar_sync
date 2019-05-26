@@ -1,8 +1,8 @@
 package calendar_sync.infrastracture.dynamo_db
 
-import calendar_sync.domain.Credential
 import com.amazonaws.services.dynamodbv2.model.{AttributeAction, AttributeValue, AttributeValueUpdate, GetItemRequest, GetItemResult, UpdateItemRequest}
 import CredentialTable._
+import calendar_sync.domain.credential.Credential
 import com.typesafe.config.ConfigFactory
 
 import scala.collection.JavaConverters._
