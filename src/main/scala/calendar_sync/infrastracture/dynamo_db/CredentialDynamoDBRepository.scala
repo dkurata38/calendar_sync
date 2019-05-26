@@ -1,4 +1,4 @@
-package calendar_sync.infrastracture.credential
+package calendar_sync.infrastracture.dynamo_db
 
 import calendar_sync.domain.{Credential, CredentialRepository}
 import javax.inject.{Inject, Singleton}

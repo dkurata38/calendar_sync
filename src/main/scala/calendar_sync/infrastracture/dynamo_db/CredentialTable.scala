@@ -1,4 +1,4 @@
-package calendar_sync.infrastracture.credential
+package calendar_sync.infrastracture.dynamo_db
 
 import calendar_sync.domain.Credential
 import com.amazonaws.services.dynamodbv2.model.{AttributeAction, AttributeValue, AttributeValueUpdate, GetItemRequest, GetItemResult, UpdateItemRequest}

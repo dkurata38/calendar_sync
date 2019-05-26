@@ -1,4 +1,4 @@
-package calendar_sync.infrastracture.credential
+package calendar_sync.infrastracture.dynamo_db
 
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
