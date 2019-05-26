@@ -2,7 +2,7 @@ package calendar_sync.domain
 
 import scala.util.Try
 
-trait GoogleCalendarEventClient {
+trait CalendarEventClient {
   def getEventsByCalendarId(calendarId: String, duration: Duration): Try[Seq[Event]]
 
   def create(calendarId: String, event: Event): Try[Event]

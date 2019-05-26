@@ -1,11 +1,11 @@
 package calendar_sync.application.service
 
 
-import calendar_sync.domain.{Duration, Event, GoogleCalendarEventClient}
+import calendar_sync.domain.{Duration, Event, CalendarEventClient}
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class EventsQueryService @Inject() (private val client: GoogleCalendarEventClient) {
+class EventsQueryService @Inject() (private val client: CalendarEventClient) {
   def query(calendarId: String, duration: Duration): Either[Throwable, Seq[Event]]
     = client.getEventsByCalendarId(calendarId, duration).toEither
 

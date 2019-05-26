@@ -4,7 +4,7 @@ import java.io.{File, InputStreamReader}
 import java.time.ZoneId
 import java.util.Collections
 
-import calendar_sync.domain.{Date, Duration, Event, GoogleCalendarEventClient}
+import calendar_sync.domain.{Date, Duration, Event, CalendarEventClient}
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
@@ -22,7 +22,7 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class GoogleCalendarEventClientImpl extends GoogleCalendarEventClient{
+class GoogleCalendarEventClientImpl extends CalendarEventClient{
   private val jsonFactory = JacksonFactory.getDefaultInstance
   private val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
   private val scopes = Collections.singletonList(CalendarScopes.CALENDAR)
