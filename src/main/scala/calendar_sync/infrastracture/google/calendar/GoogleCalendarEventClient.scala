@@ -17,7 +17,7 @@ class GoogleCalendarEventClient extends CalendarEventClient with GoogleApiClient
   override def getEventsByCalendarId(calendarId: String, duration: Duration): Try[Seq[Event]] = {
     val timeMin = duration.start.value.atStartOfDay(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
     val timeMax = duration.end.value.atStartOfDay(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-    val getEndPoint = s"https://www.googleapis.com/calendar/v3/calendars/$calendarId/events?timeMin=$timeMin&timeMax=$timeMax"
+    val getEndPoint = s"${resources(calendarId)}?timeMin=$timeMin&timeMax=$timeMax"
 
     val request = HttpRequest(HttpMethods.GET)
       .withUri(Uri(getEndPoint))
@@ -36,4 +36,7 @@ class GoogleCalendarEventClient extends CalendarEventClient with GoogleApiClient
   override def create(calendarId: String, event: Event): Try[Event] = ???
 
   override def delete(calendarId: String, eventId: String): Try[Unit] = ???
+
+  private def resources(calendarId: String): String = s"https://www.googleapis.com/calendar/v3/calendars/$calendarId/events"
+  private def resource(calendarId: String, eventId: String): String = s"https://www.googleapis.com/calendar/v3/calendars/$calendarId/events/$eventId"
 }
