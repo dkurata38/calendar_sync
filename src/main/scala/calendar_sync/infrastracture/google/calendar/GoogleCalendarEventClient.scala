@@ -35,7 +35,19 @@ class GoogleCalendarEventClient extends CalendarEventClient with GoogleApiClient
 
   override def create(calendarId: String, event: Event): Try[Event] = ???
 
-  override def delete(calendarId: String, eventId: String): Try[Unit] = ???
+  override def delete(calendarId: String, eventId: String): Try[Unit] = {
+    val request = HttpRequest(HttpMethods.DELETE)
+        .withUri(Uri(resource(calendarId, eventId)))
+
+    val mayBeResult = Http().singleRequest(request)
+        .transformWith{
+          case Success(Response(StatusCodes.OK, maybeJsonString)) => Future.successful(())
+          case Success(Response(_, maybeJsonString)) => maybeJsonString.flatMap(jsonString => Future.failed(new RuntimeException(jsonString)))
+          case Failure(exception) => Future.failed(exception)
+        }
+
+    Try(Await.result(mayBeResult, scala.concurrent.duration.Duration.Inf))
+  }
 
   private def resources(calendarId: String): String = s"https://www.googleapis.com/calendar/v3/calendars/$calendarId/events"
   private def resource(calendarId: String, eventId: String): String = s"https://www.googleapis.com/calendar/v3/calendars/$calendarId/events/$eventId"
