@@ -1,9 +1,6 @@
 package calendar_sync.infrastracture.google.calendar
 
-import java.time.{LocalDate, LocalDateTime}
-import java.time.format.DateTimeFormatter
-
-import calendar_sync.domain.event.{Event, EventDate, EventDateAndTime, EventDateTime, EventId}
+import calendar_sync.domain.event._
 
 case class GoogleEvent(id: String, summary: String, start: GoogleEventDateTime, end: GoogleEventDateTime) {
   def toEvent: Event = this match {
@@ -13,15 +10,13 @@ case class GoogleEvent(id: String, summary: String, start: GoogleEventDateTime, 
 
 object GoogleEvent {
   def unapply(arg: GoogleEvent): Option[(String, String, EventDateAndTime, EventDateAndTime)] = {
-    val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
-    val dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
     val start = arg.start match {
-      case GoogleEventDateTime(Some(date), None) => EventDate(LocalDate.parse(date, dateFormatter))
-      case GoogleEventDateTime(None, Some(dateTime)) => EventDateTime(LocalDateTime.parse(dateTime, dateTimeFormatter))
+      case GoogleEventDateTime(Some(date), None) => EventDate(date)
+      case GoogleEventDateTime(None, Some(dateTime)) => EventDateTime(dateTime)
     }
     val end = arg.end match {
-      case GoogleEventDateTime(Some(date), None) => EventDate(LocalDate.parse(date, dateFormatter))
-      case GoogleEventDateTime(None, Some(dateTime)) => EventDateTime(LocalDateTime.parse(dateTime, dateTimeFormatter))
+      case GoogleEventDateTime(Some(date), None) => EventDate(date)
+      case GoogleEventDateTime(None, Some(dateTime)) => EventDateTime(dateTime)
     }
     Some(arg.id, arg.summary, start, end)
   }
