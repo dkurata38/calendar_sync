@@ -35,11 +35,11 @@ object CredentialTable {
   private val configuration = ConfigFactory.load
   private val tableName = configuration.getString("dynamoDb.table")
 
-  def apply(credential: Credential) = {
+  def apply(credential: Credential): CredentialTable = {
     apply(credential.accessToken, credential.expiresIn, credential.refreshToken)
   }
 
-  def apply(getItemResult: GetItemResult) = {
+  def apply(getItemResult: GetItemResult): CredentialTable = {
     val maybeItem = Option(getItemResult.getItem).map(item => item.asScala)
 
     maybeItem.flatMap(item =>
