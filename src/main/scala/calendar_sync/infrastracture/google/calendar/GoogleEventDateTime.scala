@@ -3,7 +3,16 @@ package calendar_sync.infrastracture.google.calendar
 import java.time.{LocalDate, LocalDateTime}
 import java.time.format.DateTimeFormatter
 
-case class GoogleEventDateTime(date: Option[String], dateTime: Option[String])
+import calendar_sync.domain.event.{EventDate, EventDateTime}
+
+case class GoogleEventDateTime(date: Option[String], dateTime: Option[String]) {
+
+  def toEventDateAndTime = this match {
+    case GoogleEventDateTime(Some(value), None) => EventDate(LocalDate.parse(value, GoogleEventDateTime.dateFormatter))
+    case GoogleEventDateTime(None, Some(value)) => EventDateTime(LocalDateTime.parse(value, GoogleEventDateTime.dateTimeFormatter))
+    case _ => ???
+  }
+}
 
 object GoogleEventDateTime {
   private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
@@ -14,8 +23,4 @@ object GoogleEventDateTime {
 
   def of(localDateTime: LocalDateTime) =
     GoogleEventDateTime(None, Some(localDateTime.format(dateTimeFormatter)))
-
-  def unapply(arg: GoogleEventDateTime): Option[(Option[LocalDate], Option[LocalDateTime])] =
-    Some(arg.date.map(date => LocalDate.parse(date, dateFormatter)),
-      arg.dateTime.map(dateTime => LocalDateTime.parse(dateTime, dateTimeFormatter)))
 }
