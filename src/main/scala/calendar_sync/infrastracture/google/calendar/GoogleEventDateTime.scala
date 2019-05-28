@@ -9,10 +9,10 @@ object GoogleEventDateTime {
   private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
   private val dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
-  def apply(localDate: LocalDate): GoogleEventDateTime =
+  def of(localDate: LocalDate): GoogleEventDateTime =
     GoogleEventDateTime(Some(localDate.format(dateFormatter)), None)
 
-  def apply(localDateTime: LocalDateTime) =
+  def of(localDateTime: LocalDateTime) =
     GoogleEventDateTime(None, Some(localDateTime.format(dateTimeFormatter)))
 
   def unapply(arg: GoogleEventDateTime): Option[(Option[LocalDate], Option[LocalDateTime])] =

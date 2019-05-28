@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, StatusCodes, Uri}
+import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import calendar_sync.domain.Duration
 import calendar_sync.domain.event.{CalendarEventClient, Event}
@@ -13,7 +14,7 @@ import calendar_sync.infrastracture.google.GoogleApiClient
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
-class GoogleCalendarEventClient extends CalendarEventClient with GoogleApiClient{
+class GoogleCalendarEventClient extends Directives with CalendarEventClient with GoogleApiClient with GoogleEventResponseSupport {
   override def getEventsByCalendarId(calendarId: String, duration: Duration): Try[Seq[Event]] = {
     val timeMin = duration.start.value.atStartOfDay(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
     val timeMax = duration.end.value.atStartOfDay(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
