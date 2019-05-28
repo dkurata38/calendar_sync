@@ -20,4 +20,18 @@ object GoogleEvent {
     }
     Some(arg.id, arg.summary, start, end)
   }
+
+  def apply(event: Event) = {
+    val start = event.start match {
+      case EventDate(value) => GoogleEventDateTime(value)
+      case EventDateTime(value) => GoogleEventDateTime(value)
+    }
+
+    val end = event.end match {
+      case EventDate(value) => GoogleEventDateTime(value)
+      case EventDateTime(value) => GoogleEventDateTime(value)
+    }
+
+    GoogleEvent("", event.title, start, end)
+  }
 }
