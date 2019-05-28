@@ -39,7 +39,7 @@ object CredentialTable {
     apply(credential.accessToken, credential.expiresIn, credential.refreshToken)
   }
 
-  def apply(getItemResult: GetItemResult): CredentialTable = {
+  def apply(getItemResult: GetItemResult): Option[CredentialTable] = {
     val maybeItem = Option(getItemResult.getItem).map(item => item.asScala)
 
     maybeItem.flatMap(item =>
