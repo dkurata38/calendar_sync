@@ -12,7 +12,8 @@ trait GoogleApiClient {
   implicit val actorSystem: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-  val clientSecrets: ClientSecrets = ClientSecretsFile.load
+  val clientSecrets: ClientSecrets = ClientSecrets.load
+
 
   object Response {
     def unapply(httpResponse: HttpResponse): Option[(StatusCode, Future[String])] =
