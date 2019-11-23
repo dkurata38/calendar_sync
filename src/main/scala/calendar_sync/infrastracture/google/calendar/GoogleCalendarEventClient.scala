@@ -9,7 +9,7 @@ import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, StatusCodes, Uri}
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.{ActorMaterializer, Materializer}
+import akka.stream.ActorMaterializer
 import calendar_sync.domain.Duration
 import calendar_sync.domain.credential.Credential
 import calendar_sync.domain.event.{CalendarEventClient, Event, EventId}
@@ -17,8 +17,8 @@ import calendar_sync.infrastracture.google.GoogleApiClient
 import javax.inject.Singleton
 import spray.json.enrichAny
 
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 @Singleton
 class GoogleCalendarEventClient extends Directives with CalendarEventClient with GoogleApiClient with GoogleEventResponseSupport {

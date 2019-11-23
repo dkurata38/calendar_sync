@@ -1,6 +1,5 @@
 package calendar_sync.infrastracture.google
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{HttpResponse, StatusCode}
 import akka.stream.ActorMaterializer
 import calendar_sync.infrastracture.google.client_secrets.ClientSecrets
